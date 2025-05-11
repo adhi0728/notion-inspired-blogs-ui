@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,14 +20,24 @@ import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email address"),
+    fullName: z
+      .string()
+      .min(2, "Full name must be at least 2 characters")
+      .max(50, "Full name must not exceed 50 characters")
+      .regex(/^[a-zA-Z\s'-]+$/, "Full name can only contain letters, spaces, hyphens and apostrophes"),
+    email: z
+      .string()
+      .email("Please enter a valid email address")
+      .refine(email => !email.endsWith("@example.com"), {
+        message: "Example domain emails are not allowed",
+      }),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
       .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
       .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
+      .regex(/[0-9]/, "Password must contain at least one number")
+      .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character"),
     confirmPassword: z.string(),
     acceptTerms: z.boolean().refine((val) => val === true, {
       message: "You must accept the terms and conditions",
@@ -46,12 +57,13 @@ export const SignUpPage = () => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      fullName: "",
       email: "",
       password: "",
       confirmPassword: "",
       acceptTerms: false,
     },
+    mode: "onBlur", // Validate on blur for better user experience
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -96,7 +108,7 @@ export const SignUpPage = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="fullName"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
@@ -135,6 +147,9 @@ export const SignUpPage = () => {
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
+                    <FormDescription className="text-xs">
+                      Must be at least 8 characters with uppercase, lowercase, number, and special character.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
