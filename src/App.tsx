@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminPostsPage from "./pages/admin/PostsPage";
 import AdminUsersPage from "./pages/admin/UsersPage";
 import CreatePostPage from "./pages/admin/CreatePostPage";
+import EditPostPage from "./pages/admin/EditPostPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route index element={<AdminDashboard />} />
             <Route path="posts" element={<AdminPostsPage />} />
             <Route path="posts/new" element={<CreatePostPage />} />
+            <Route path="posts/:id/edit" element={<EditPostPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
