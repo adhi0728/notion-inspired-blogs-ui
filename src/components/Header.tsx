@@ -4,10 +4,11 @@ import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // This would use Supabase auth
+  const { user, profile, signOut, isAdmin } = useAuth();
 
   return (
     <header className="border-b sticky top-0 z-40 bg-background">
@@ -25,12 +26,17 @@ export const Header = () => {
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <div className="hidden md:flex items-center gap-4">
-            {isLoggedIn ? (
+            {user ? (
               <>
-                <Button asChild variant="ghost">
-                  <Link to="/dashboard">Dashboard</Link>
-                </Button>
-                <Button onClick={() => setIsLoggedIn(false)}>Sign Out</Button>
+                {isAdmin && (
+                  <Button asChild variant="ghost">
+                    <Link to="/admin">Admin Dashboard</Link>
+                  </Button>
+                )}
+                <span className="text-sm font-medium">
+                  {profile?.full_name || user.email}
+                </span>
+                <Button onClick={signOut}>Sign Out</Button>
               </>
             ) : (
               <>
@@ -62,10 +68,12 @@ export const Header = () => {
             <Link to="/categories" className="nav-link text-lg" onClick={() => setIsMenuOpen(false)}>Categories</Link>
             <Link to="/about" className="nav-link text-lg" onClick={() => setIsMenuOpen(false)}>About</Link>
             <div className="h-px bg-border my-2"></div>
-            {isLoggedIn ? (
+            {user ? (
               <>
-                <Link to="/dashboard" className="nav-link text-lg" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-                <Button onClick={() => { setIsLoggedIn(false); setIsMenuOpen(false); }}>Sign Out</Button>
+                {isAdmin && (
+                  <Link to="/admin" className="nav-link text-lg" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link>
+                )}
+                <Button onClick={() => { signOut(); setIsMenuOpen(false); }}>Sign Out</Button>
               </>
             ) : (
               <>

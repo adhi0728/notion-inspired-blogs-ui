@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import { AdminLayout } from "./components/AdminLayout";
 import HomePage from "./pages/HomePage";
@@ -19,41 +20,48 @@ import CreatePostPage from "./pages/admin/CreatePostPage";
 import EditPostPage from "./pages/admin/EditPostPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="blog/:id" element={<BlogDetailPage />} />
-            <Route path="signin" element={<SignInPage />} />
-            <Route path="signup" element={<SignUpPage />} />
-            <Route path="about" element={<AboutPage />} />
-            <Route path="categories" element={<CategoriesPage />} />
-          </Route>
+    <BrowserRouter>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Layout />}>
+              <Route index element={<HomePage />} />
+              <Route path="blog/:id" element={<BlogDetailPage />} />
+              <Route path="signin" element={<SignInPage />} />
+              <Route path="signup" element={<SignUpPage />} />
+              <Route path="about" element={<AboutPage />} />
+              <Route path="categories" element={<CategoriesPage />} />
+            </Route>
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="posts" element={<AdminPostsPage />} />
-            <Route path="posts/new" element={<CreatePostPage />} />
-            <Route path="posts/:id/edit" element={<EditPostPage />} />
-            <Route path="users" element={<AdminUsersPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute adminOnly>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<AdminDashboard />} />
+              <Route path="posts" element={<AdminPostsPage />} />
+              <Route path="posts/new" element={<CreatePostPage />} />
+              <Route path="posts/:id/edit" element={<EditPostPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
 
-          {/* 404 Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 
