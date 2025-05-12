@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,47 +23,50 @@ import SettingsPage from "./pages/admin/SettingsPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Create a new QueryClient instance outside of the component
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Layout />}>
-              <Route index element={<HomePage />} />
-              <Route path="blog/:id" element={<BlogDetailPage />} />
-              <Route path="signin" element={<SignInPage />} />
-              <Route path="signup" element={<SignUpPage />} />
-              <Route path="about" element={<AboutPage />} />
-              <Route path="categories" element={<CategoriesPage />} />
-            </Route>
+const App: React.FC = () => (
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Layout />}>
+                <Route index element={<HomePage />} />
+                <Route path="blog/:id" element={<BlogDetailPage />} />
+                <Route path="signin" element={<SignInPage />} />
+                <Route path="signup" element={<SignUpPage />} />
+                <Route path="about" element={<AboutPage />} />
+                <Route path="categories" element={<CategoriesPage />} />
+              </Route>
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute adminOnly>
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<AdminDashboard />} />
-              <Route path="posts" element={<AdminPostsPage />} />
-              <Route path="posts/new" element={<CreatePostPage />} />
-              <Route path="posts/:id/edit" element={<EditPostPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute adminOnly>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="posts" element={<AdminPostsPage />} />
+                <Route path="posts/new" element={<CreatePostPage />} />
+                <Route path="posts/:id/edit" element={<EditPostPage />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
 
-            {/* 404 Route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
+              {/* 404 Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  </React.StrictMode>
 );
 
 export default App;
