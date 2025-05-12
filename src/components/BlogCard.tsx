@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface BlogCardProps {
-  id: number;
+  id: number | string;
   title: string;
   excerpt: string;
   coverImage: string;
@@ -27,6 +27,15 @@ export const BlogCard = ({
   publishedAt,
   tags,
 }: BlogCardProps) => {
+  // Format the date if it exists
+  const formattedDate = publishedAt 
+    ? new Date(publishedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "";
+
   return (
     <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
       <Link to={`/blog/${id}`}>
@@ -35,6 +44,9 @@ export const BlogCard = ({
             src={coverImage}
             alt={title}
             className="object-cover w-full h-full"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&w=800";
+            }}
           />
         </AspectRatio>
       </Link>
@@ -45,16 +57,15 @@ export const BlogCard = ({
               src={author.avatar}
               alt={author.name}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://randomuser.me/api/portraits/lego/1.jpg";
+              }}
             />
           </div>
           <span className="text-sm text-muted-foreground">{author.name}</span>
           <span className="text-sm text-muted-foreground">•</span>
           <time className="text-sm text-muted-foreground">
-            {new Date(publishedAt).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
+            {formattedDate}
           </time>
         </div>
         <Link to={`/blog/${id}`} className="hover:underline">
@@ -66,7 +77,7 @@ export const BlogCard = ({
       </CardContent>
       <CardFooter className="flex flex-wrap items-center gap-2 pt-0">
         <div className="flex flex-wrap gap-2 flex-grow">
-          {tags.slice(0, 3).map((tag) => (
+          {tags && tags.slice(0, 3).map((tag) => (
             <Badge key={tag} variant="outline" className="hover:bg-secondary hover:text-secondary-foreground">
               {tag}
             </Badge>

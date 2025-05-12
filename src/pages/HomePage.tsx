@@ -1,92 +1,66 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BlogCard } from "@/components/BlogCard";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
-// Mock data (will be replaced with Supabase data)
-const mockPosts = [
-  {
-    id: 1,
-    title: "Getting Started with React and TypeScript",
-    excerpt: "Learn how to set up a new React project with TypeScript and build your first component.",
-    coverImage: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&w=800",
+// Fetch posts from Supabase
+const fetchPosts = async () => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      profiles:author_id (
+        full_name,
+        avatar_url
+      )
+    `)
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data.map(post => ({
+    id: post.id,
+    title: post.title,
+    excerpt: post.excerpt || post.content.substring(0, 150) + "...",
+    coverImage: post.featured_image || "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&w=800",
     author: {
-      name: "Alex Johnson",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      name: post.profiles?.full_name || "Unknown Author",
+      avatar: post.profiles?.avatar_url || "https://randomuser.me/api/portraits/lego/1.jpg",
     },
-    publishedAt: "2023-05-15",
-    tags: ["React", "TypeScript", "Frontend"],
-  },
-  {
-    id: 2,
-    title: "Building a Blog with Supabase and React",
-    excerpt: "Discover how to create a full-featured blog using Supabase as your backend and React for the frontend.",
-    coverImage: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&w=800",
-    author: {
-      name: "Sophia Rodriguez",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    },
-    publishedAt: "2023-06-02",
-    tags: ["Supabase", "React", "Full Stack"],
-  },
-  {
-    id: 3,
-    title: "The Power of Tailwind CSS",
-    excerpt: "Why Tailwind CSS is changing how developers approach styling their web applications.",
-    coverImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&w=800",
-    author: {
-      name: "Marcus Lee",
-      avatar: "https://randomuser.me/api/portraits/men/22.jpg",
-    },
-    publishedAt: "2023-06-20",
-    tags: ["CSS", "Tailwind", "Design"],
-  },
-  {
-    id: 4,
-    title: "State Management in 2023",
-    excerpt: "A comprehensive overview of state management solutions for modern web applications.",
-    coverImage: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&w=800",
-    author: {
-      name: "Emma Wilson",
-      avatar: "https://randomuser.me/api/portraits/women/29.jpg",
-    },
-    publishedAt: "2023-07-05",
-    tags: ["React", "State Management", "Frontend"],
-  },
-  {
-    id: 5,
-    title: "Introduction to API Design",
-    excerpt: "Best practices for designing robust and scalable APIs for your applications.",
-    coverImage: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&w=800",
-    author: {
-      name: "David Chen",
-      avatar: "https://randomuser.me/api/portraits/men/42.jpg",
-    },
-    publishedAt: "2023-07-18",
-    tags: ["API", "Backend", "Architecture"],
-  },
-  {
-    id: 6,
-    title: "Testing Your React Applications",
-    excerpt: "A practical guide to testing React applications with Jest and React Testing Library.",
-    coverImage: "https://images.unsplash.com/photo-1591696205602-2f950c417cb9?auto=format&w=800",
-    author: {
-      name: "Olivia Brown",
-      avatar: "https://randomuser.me/api/portraits/women/63.jpg",
-    },
-    publishedAt: "2023-08-01",
-    tags: ["Testing", "React", "Jest"],
-  },
-];
+    publishedAt: post.published_at || post.created_at,
+    tags: post.tags || [],
+  }));
+};
 
 export const HomePage = () => {
-  const [posts, setPosts] = useState(mockPosts);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  
+  const { data: posts = [], isLoading, error } = useQuery({
+    queryKey: ['posts'],
+    queryFn: fetchPosts,
+  });
 
-  const allTags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort();
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load posts");
+      console.error("Error loading posts:", error);
+    }
+  }, [error]);
+
+  // Get unique tags from all posts
+  const allTags = Array.from(
+    new Set(posts.flatMap((post) => post.tags || []))
+  ).sort();
   
   const filteredPosts = activeTag
-    ? posts.filter((post) => post.tags.includes(activeTag))
+    ? posts.filter((post) => post.tags?.includes(activeTag))
     : posts;
 
   return (
@@ -130,23 +104,39 @@ export const HomePage = () => {
       {/* Blog Posts Grid */}
       <section className="py-12">
         <div className="container-custom">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.map((post) => (
-              <BlogCard key={post.id} {...post} />
-            ))}
-          </div>
-
-          {filteredPosts.length === 0 && (
-            <div className="text-center py-12">
-              <h3 className="text-2xl mb-2">No posts found</h3>
-              <p className="text-muted-foreground mb-4">
-                No posts found with the selected tag.
-              </p>
-              <Button onClick={() => setActiveTag(null)}>View All Posts</Button>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="flex flex-col space-y-3">
+                  <Skeleton className="h-[200px] w-full rounded-lg" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPosts.map((post) => (
+                <BlogCard key={post.id} {...post} />
+              ))}
             </div>
           )}
 
-          {filteredPosts.length > 0 && (
+          {!isLoading && filteredPosts.length === 0 && (
+            <div className="text-center py-12">
+              <h3 className="text-2xl mb-2">No posts found</h3>
+              <p className="text-muted-foreground mb-4">
+                {activeTag ? `No posts found with the tag "${activeTag}".` : "There are no posts yet."}
+              </p>
+              {activeTag && (
+                <Button onClick={() => setActiveTag(null)}>View All Posts</Button>
+              )}
+            </div>
+          )}
+
+          {!isLoading && filteredPosts.length > 0 && filteredPosts.length >= 6 && (
             <div className="mt-12 text-center">
               <Button variant="outline" size="lg">
                 Load More
